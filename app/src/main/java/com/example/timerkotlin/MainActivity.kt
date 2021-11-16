@@ -30,8 +30,6 @@ class MainActivity : AppCompatActivity() {
         this.timerStop()
     }
 
-
-
     fun vibrateOneShot(){
         val vibrationEffect = VibrationEffect.createOneShot(100, DEFAULT_AMPLITUDE)
         vibrator?.vibrate(vibrationEffect)
@@ -44,17 +42,23 @@ class MainActivity : AppCompatActivity() {
 
     fun timerStart(view: View) {
         timeCount = 0
+        val handler = Handler(Looper.getMainLooper())
+        handler.post(Runnable {
+            // メインスレッド上で実行させたい内容
+            // UIの変更はメインスレッドでやらないといけない
+            timerText?.setText(timeCount.toString())
+        })
+
         // timer callback
         val timerCallback: TimerTask.() -> Unit = fun TimerTask.() {
 
             timeCount += 1
-            val handler = Handler(Looper.getMainLooper())
+
             handler.post(Runnable {
-                // メインスレッド上で実行させたい内容
-                // UIの変更はメインスレッドでやらないといけない
                 timerText?.setText(timeCount.toString())
             })
 
+            // 30秒ごとの処理
             when (timeCount%30){
                 17, 18, 19 -> { vibrateOneShot() }
                 20 -> { vibrateLongShot() }
@@ -63,10 +67,12 @@ class MainActivity : AppCompatActivity() {
             }
 
         }
-        // timer ivent
+        // timer event
         if (timer == null)
             timer = Timer()
-        timer?.schedule(0, 1000, timerCallback)
+
+        // timerCallbackをperiodごとに呼び出す
+        timer?.schedule(1000, 1000, timerCallback)
     }
     fun timerStop(view: View? = null) {
         timer?.cancel()
